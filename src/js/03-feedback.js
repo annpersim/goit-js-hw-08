@@ -1,26 +1,57 @@
 import throttle from 'lodash.throttle';
 
-const FORM_STATE = 'feedback-form-state';
-
+const inputEmail = document.querySelector('[name="email"]');
+const inputMessage = document.querySelector('[name="message"]');
 const form = document.querySelector('.feedback-form');
-const formData = {};
+const FORM_FEEDBACK_STATE = 'feedback-form-state';
 
-form.addEventListener('input', throttle(onFormInput, 500));
-form.addEventListener('submit', onFormSubmit);
+window.addEventListener('load', event => {
+  try {
+    const formFeedback = getLocalStorage(FORM_FEEDBACK_STATE);
+    inputEmail.value = formFeedback[inputEmail.name];
+    inputMessage.value = formFeedback[inputMessage.name];
+  } catch (error) {
+    console.log(`can not find ${FORM_FEEDBACK_STATE} in localStorage`);
+  }
+});
 
-function onFormInput(e) {
-  formData[e.target.name] = e.target.value;
-  localStorage.setItem(FORM_STATE, JSON.stringify(formData));
+form.addEventListener(
+  'input',
+  throttle(event => {
+    addFormFeedbackToLocalStorage(event);
+  }, 500)
+);
+
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const formFeedback = getLocalStorage(FORM_FEEDBACK_STATE);
+  console.log(formFeedback);
+  clearForm();
+  addFormFeedbackToLocalStorage();
+});
+
+function addFormFeedbackToLocalStorage() {
+  const formToFeedback = {};
+  formToFeedback[inputEmail.name] = inputEmail.value;
+  formToFeedback[inputMessage.name] = inputMessage.value;
+  setLocalStorage(FORM_FEEDBACK_STATE, formToFeedback);
 }
 
-function onFormSubmit(e) {
-  e.preventDefault();
-  e.target.reset();
+function clearForm() {
+  inputEmail.value = '';
+  inputMessage.value = '';
+}
 
-  const savedData = localStorage.getItem(FORM_STATE);
-  if (savedData) {
-    console.log(JSON.parse(savedData));
+function setLocalStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function getLocalStorage(key) {
+  try {
+    const getKey = localStorage.getItem(key);
+    return JSON.parse(getKey);
+  } catch (error) {
+    console.log(error.name);
+    console.log(error.message);
   }
-
-  localStorage.removeItem(FORM_STATE);
 }

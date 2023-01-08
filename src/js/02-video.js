@@ -4,11 +4,45 @@ import throttle from 'lodash.throttle';
 const player = new Player('vimeo-player');
 const CURRENT_TIME = 'videoplayer-current-time';
 
-player.on('timeupdate', throttle(onTimeUpdate, 1000));
+player.on(
+  'timeupdate',
+  throttle(data => {
+    setCurrentTime(data);
+  }, 1000)
+);
 
-function onTimeUpdate(data) {
-  localStorage.setItem(CURRENT_TIME, JSON.stringify(data.seconds));
+player
+  .setCurrentTime(getLocalStorage(CURRENT_TIME))
+  .then(function (seconds) {})
+  .catch(function (error) {
+    switch (error.name) {
+      case 'RangeError':
+        console.log(
+          `${error}`,
+          '\n',
+          `Seconds value: ${getLocalStorage(CURRENT_TIME)}`
+        );
+        break;
+
+      default:
+        console.log(`${error}`);
+        break;
+    }
+  });
+
+function setCurrentTime(data) {
+  setLocalStorage(CURRENT_TIME, data.seconds);
 }
 
-const currentTime = localStorage.getItem(CURRENT_TIME);
-player.setCurrentTime(currentTime);
+function setLocalStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function getLocalStorage(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.log(error.name);
+    console.log(error.message);
+  }
+}
